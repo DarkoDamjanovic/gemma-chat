@@ -487,33 +487,37 @@ async function* readSSE(stream: ReadableStream<Uint8Array>): AsyncGenerator<stri
   const decoder = new TextDecoder()
   let buf = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buf += decoder.decode(value, { stream: true })
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
 
-    let idx: number
-    while ((idx = buf.indexOf('\n\n')) >= 0) {
-      const block = buf.slice(0, idx).trim()
-      buf = buf.slice(idx + 2)
-      if (!block) continue
-      for (const line of block.split('\n')) {
+      let idx: number
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, idx).trim()
+        buf = buf.slice(idx + 2)
+        if (!block) continue
+        for (const line of block.split('\n')) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            if (data) yield data
+          }
+        }
+      }
+    }
+
+    // Flush remaining buffer
+    if (buf.trim()) {
+      for (const line of buf.trim().split('\n')) {
         if (line.startsWith('data: ')) {
           const data = line.slice(6).trim()
           if (data) yield data
         }
       }
     }
-  }
-
-  // Flush remaining buffer
-  if (buf.trim()) {
-    for (const line of buf.trim().split('\n')) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6).trim()
-        if (data) yield data
-      }
-    }
+  } finally {
+    reader.cancel()
   }
 }
 
