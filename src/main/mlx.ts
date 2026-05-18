@@ -202,7 +202,7 @@ export async function installMLX(
   // Step 3: Install mlx-lm (force public PyPI to bypass corporate registries)
   onProgress({ stage: 'install', message: 'Installing mlx-lm (this may take a few minutes)…' })
   await runProcess(vPy, [
-    '-m', 'pip', 'install', '--upgrade', 'mlx-lm>=0.24.0',
+    '-m', 'pip', 'install', 'mlx-lm==0.31.2',
     '--index-url', 'https://pypi.org/simple/'
   ], onProgress)
 
